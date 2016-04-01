@@ -21,12 +21,11 @@ let HOOKS = {};
 function addHook(hookName, realHookInfo) {
 	
 	let hookInfo = {
-		name : hookName,
+		name : realHookInfo._name.length ? realHookInfo._name : hookName,
 		hooks : {
 
 		}
 	};
-
 
 	if (utils.isFunction(realHookInfo)) {				
 		hookInfo.hooks.run = realHookInfo;		
@@ -75,9 +74,6 @@ if ('dependencies' in currentPackage) {
 module.exports = function (app, globalSettings) {
 
 	if (app) app.hooks = HOOKS;	
-
-
-	console.log(HOOKS);
 
 	let promiseStack = [];
 	for (let hookName in HOOKS) {
