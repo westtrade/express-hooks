@@ -7,7 +7,7 @@ const AppEvents = new (require('events'))();
 
 //console.log(process.mainModule);
 
-const HOOK_PREFIX = 'express-hook';
+const HOOK_PREFIX = 'express-hook-';
 const MAIN_MODULE_FOLDER = path.dirname(module.parent.filename);
 
 
