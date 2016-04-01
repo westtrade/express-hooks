@@ -1,6 +1,6 @@
 {
   "name": "express-hooks",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Hooks for Express defined in npm modlues",
   "main": "index.js",
   "scripts": {

@@ -7,11 +7,32 @@ const AppEvents = new (require('events'))();
 
 //console.log(process.mainModule);
 
-let mainModulePath = path.join(path.dirname(module.parent.filename), 'package.json');
+const HOOK_PREFIX = 'express-hook';
+const MAIN_MODULE_FOLDER = path.dirname(module.parent.filename);
+
+
+let mainModulePath = path.join(MAIN_MODULE_FOLDER, 'package.json');
 let currentPackage = require(mainModulePath);
 
-const HOOK_PREFIX = 'express-hook';
-let hooks = {};
+
+let HOOKS = {};
+
+let customHooks = [];
+
+
+function addHook(hookName, hookInfo) {
+	
+	if (utils.isFunction(hookInfo)) {				
+		hookInfo = {
+			run : hookInfo
+		}
+	} 
+
+
+	if (utils.isObject(hookInfo)) HOOKS[hookName] = hookInfo;	
+
+}
+
 
 if ('dependencies' in currentPackage) {
 
@@ -21,19 +42,19 @@ if ('dependencies' in currentPackage) {
 
 			let hookName = depName.replace(HOOK_PREFIX, '').replace(/^[-]+/, '');
 			let hookInfo = module.parent.require(depName);
-
-
-			if (utils.isFunction(hookInfo)) {				
-				hookInfo = {
-					run : hookInfo
-				}
-			} 
-
-
-			if (utils.isObject(hookInfo)) hooks[hookName] = hookInfo;			
+			addHook(hookName, hookInfo);
 		}
 	}
 }
+
+
+customHooks.forEach(hookPath => {
+	let hookInfo = module.parent.require(hookPath);
+	let hoookName = path.basename(hookPath);
+	
+
+	addHook(hoookName, hookInfo);
+});
 
 
 
@@ -56,13 +77,13 @@ if ('dependencies' in currentPackage) {
  */
 module.exports = function (app, globalSettings) {
 
-	if (app) app.hooks = hooks;	
+	if (app) app.hooks = HOOKS;	
 
 	let promiseStack = [];
-	for (let hookName in hooks) {
-		if('run' in hooks[hookName] && utils.isFunction(hooks[hookName].run)) {
+	for (let hookName in HOOKS) {
+		if('run' in HOOKS[hookName] && utils.isFunction(HOOKS[hookName].run)) {
 			let localHookSettings = {};
-			promiseStack.push(hooks[hookName].run(app, localHookSettings, globalSettings));
+			promiseStack.push(HOOKS[hookName].run(app, localHookSettings, globalSettings));
 		}
 	}
 
@@ -85,4 +106,10 @@ module.exports.ready = function () {
 		if (isReady) return resolve();
 		else AppEvents.on('ready', event => { isReady = true; resovle() }).on('error', e => reject(e));
 	});
+}
+
+
+
+module.exports.addCustomHook = function (path) {
+	customHooks.push(path);
 }
