@@ -17,29 +17,32 @@ let currentPackage = require(mainModulePath);
 
 let HOOKS = {};
 
-let customHooks = [];
 
-
-function addHook(hookName, hookInfo) {
+function addHook(hookName, realHookInfo) {
 	
-	if (utils.isFunction(hookInfo)) {				
-		hookInfo = {
-			run : hookInfo
+	let hookInfo = {
+		name : hookName,
+		hooks : {
+
 		}
+	};
+
+
+	if (utils.isFunction(realHookInfo)) {				
+		hookInfo.hooks.run = realHookInfo;		
 	} 
 
-
-	if (utils.isObject(hookInfo)) HOOKS[hookName] = hookInfo;	
-
+	if (utils.isObject(hookInfo)) {
+		hookInfo = utils.extendSettings(realHookInfo, hookInfo);
+		HOOKS[hookName] = hookInfo;	
+	}
 }
 
 
 if ('dependencies' in currentPackage) {
 
 	for (let depName in currentPackage.dependencies) {	
-
 		if (depName.indexOf(HOOK_PREFIX) === 0) {
-
 			let hookName = depName.replace(HOOK_PREFIX, '').replace(/^[-]+/, '');
 			let hookInfo = module.parent.require(depName);
 			addHook(hookName, hookInfo);
@@ -48,13 +51,7 @@ if ('dependencies' in currentPackage) {
 }
 
 
-customHooks.forEach(hookPath => {
-	let hookInfo = module.parent.require(hookPath);
-	let hoookName = path.basename(hookPath);
-	
 
-	addHook(hoookName, hookInfo);
-});
 
 
 
@@ -79,14 +76,18 @@ module.exports = function (app, globalSettings) {
 
 	if (app) app.hooks = HOOKS;	
 
+
+	console.log(HOOKS);
+
 	let promiseStack = [];
 	for (let hookName in HOOKS) {
-		if('run' in HOOKS[hookName] && utils.isFunction(HOOKS[hookName].run)) {
-			let localHookSettings = {};
-			promiseStack.push(HOOKS[hookName].run(app, localHookSettings, globalSettings));
+		if('hooks' in HOOKS[hookName] && 'run' in HOOKS[hookName].hooks && utils.isFunction(HOOKS[hookName].hooks.run)) {
+			let hookInfo = HOOKS[hookName];			
+			promiseStack.push(HOOKS[hookName].hooks.run.apply(hookInfo, [app, globalSettings]));
 		}
 	}
 
+	
 	Promise.all(promiseStack).then(result => AppEvents.trigger('ready'), error => AppEvents.trigger('error'));
 }
 
@@ -110,6 +111,8 @@ module.exports.ready = function () {
 
 
 
-module.exports.addCustomHook = function (path) {
-	customHooks.push(path);
+module.exports.addCustomHook = function (hookPath) {	
+	let hookInfo = module.parent.require(hookPath);
+	let hoookName = path.basename(hookPath);
+	addHook(hoookName, hookInfo);
 }

@@ -1,3 +1,5 @@
+'use strict';
+
 var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
@@ -17,8 +19,7 @@ var app = express();
 
 let hookExpress = require('../index.js');
 
-
-
+hookExpress.addCustomHook('./test_custom_hook');
 hookExpress(app, {});
 
 
