@@ -13,15 +13,16 @@ var users = require('./routes/users');
 var app = express();
 
 
-
-
-
-
 let hookExpress = require('../index.js');
+hookExpress
+    .addCustomHook('./test_custom_hook')
+    .initApp(app)
+    .ready()
+    
 
-hookExpress.addCustomHook('./test_custom_hook');
-hookExpress(app, {});
-
+    .then((injector) => { console.log('hi'); })
+    .catch((err) => { console.log(err) })
+;
 
 
 // view engine setup
