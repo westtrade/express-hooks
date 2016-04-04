@@ -14,6 +14,8 @@ let rcFilePath = path.join(MAIN_MODULE_FOLDER, '.expressrc');
 let currentPackage = require(mainModulePath);
 
 const injector = require("lightject");
+
+
 const _ = require('lodash');
 const ini = require('ini');
 
@@ -164,7 +166,7 @@ for (let hookName in rcHooksConfig) {
  *
  * 
  */
-module.exports.initApp = module.exports = function executeRunHooks(app, globalSettings) {	
+function executeRunHooks(app, globalSettings) {	
 
 	injector.value("$hooks_implementations", HOOKS_MAP);
 	injector.value("$app", app);
@@ -188,11 +190,15 @@ module.exports.initApp = module.exports = function executeRunHooks(app, globalSe
 	})
 	
 	.then(result => AppEvents.emit('ready', injector), error => { AppEvents.trigger('error', error)});
-	return module.exports;
+	
+	return this;
 }
 
+module.exports = executeRunHooks;
 for (let utilName in utils) module.exports[utilName] = utils[utilName];
 
+
+module.exports.initApp = executeRunHooks;
 
 let isReady = false;
 AppEvents.on('ready', result => { isReady = true; });
@@ -207,5 +213,6 @@ module.exports.addCustomHook = function (hookPath) {
 	let hookInfo = module.parent.require(hookPath);
 	let hoookName = path.basename(hookPath);
 	addHook(hoookName, hookInfo);	
+
 	return module.exports;
 }

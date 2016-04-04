@@ -14,15 +14,19 @@ var app = express();
 
 
 let hookExpress = require('../index.js');
+
+
 hookExpress
     .addCustomHook('./test_custom_hook')
     .initApp(app)
     .ready()
-    
+    .then((injector) => { 
 
-    .then((injector) => { console.log('hi'); })
+        console.log(injector);
+
+    })
     .catch((err) => { console.log(err) })
-;
+
 
 
 // view engine setup
