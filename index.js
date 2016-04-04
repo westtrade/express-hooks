@@ -191,7 +191,7 @@ function executeRunHooks(app, globalSettings) {
 	
 	.then(result => AppEvents.emit('ready', injector), error => { AppEvents.trigger('error', error)});
 	
-	return this;
+	return module.exports;
 }
 
 module.exports = executeRunHooks;
